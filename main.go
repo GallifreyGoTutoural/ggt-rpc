@@ -31,8 +31,8 @@ func main() {
 	// send options
 	_ = json.NewEncoder(conn).Encode(DefaultOption)
 	cc := codec.NewGobCodec(conn)
-	// send request & receive response
-	for i := 0; i < 15; i++ {
+	// send request
+	for i := 0; i < 5; i++ {
 		h := &codec.Header{
 			ServiceMethod: "Foo.Sum",
 			Seq:           uint64(i),
@@ -40,10 +40,18 @@ func main() {
 		// write request
 		_ = cc.Write(h, "ggt-rpc")
 		// read response
-		_ = cc.ReadHeader(h)
+
+	}
+
+	//receive response
+	time.Sleep(time.Second)
+	for i := 0; i < 5; i++ {
+		var respHeader codec.Header
+		_ = cc.ReadHeader(&respHeader)
+		log.Println("replyHeader:", respHeader)
 		var reply string
 		_ = cc.ReadBody(&reply)
-		log.Println("reply:", reply)
+		log.Println("replyBody:", reply)
 	}
 
 }
