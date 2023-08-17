@@ -1,10 +1,10 @@
 package main
 
 import (
-	"encoding/json"
-	"github.com/GallifreyGoTutoural/ggt-rpc/codec"
+	"fmt"
 	"log"
 	"net"
+	"sync"
 	"time"
 )
 
@@ -20,38 +20,31 @@ func startServer(addr chan string) {
 }
 
 func main() {
+
+	log.SetFlags(0)
 	addr := make(chan string)
+	// server
 	go startServer(addr)
-
-	// build a connection with server
-	conn, _ := net.Dial("tcp", <-addr)
-	defer func() { _ = conn.Close() }()
+	// client
+	client, _ := Dial("tcp", <-addr)
+	defer func() { _ = client.Close() }()
 
 	time.Sleep(time.Second)
-	// send options
-	_ = json.NewEncoder(conn).Encode(DefaultOption)
-	cc := codec.NewGobCodec(conn)
-	// send request
+	var wg sync.WaitGroup
+	// send request & receive response
 	for i := 0; i < 5; i++ {
-		h := &codec.Header{
-			ServiceMethod: "Foo.Sum",
-			Seq:           uint64(i),
-		}
-		// write request
-		_ = cc.Write(h, "ggt-rpc")
-		// read response
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			args := fmt.Sprintf("ggt-rpc %d", i)
+			var reply string
+			if err := client.Call("Foo.Sum", args, &reply); err != nil {
+				log.Fatal("call Foo.Sum error:", err)
+			}
+			log.Println("reply:", reply)
+		}(i)
 
 	}
-
-	//receive response
-	time.Sleep(time.Second)
-	for i := 0; i < 5; i++ {
-		var respHeader codec.Header
-		_ = cc.ReadHeader(&respHeader)
-		log.Println("replyHeader:", respHeader)
-		var reply string
-		_ = cc.ReadBody(&reply)
-		log.Println("replyBody:", reply)
-	}
+	wg.Wait()
 
 }
