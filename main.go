@@ -19,6 +19,19 @@ func startServer(addr chan string) {
 	DefaultServer.Accept(l)
 }
 
+type Calculator struct {
+	A, B int
+	Name string
+}
+
+func (c *Calculator) Add() int {
+	return c.A + c.B
+}
+
+func (c *Calculator) Subtract() int {
+	return c.A - c.B
+}
+
 func main() {
 
 	log.SetFlags(0)
