@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"context"
 	"log"
 	"net"
 	"sync"
@@ -9,31 +9,24 @@ import (
 )
 
 func startServer(addr chan string) {
-	// :0 main a random port
+	var foo Foo
+	// register a service
+	if err := Register(&foo); err != nil {
+		log.Fatal("register error:", err)
+	}
+	// pick a free port
 	l, err := net.Listen("tcp", ":0")
 	if err != nil {
 		log.Fatal("network error:", err)
 	}
 	log.Println("start rpc server on", l.Addr())
+	// notify port
 	addr <- l.Addr().String()
-	DefaultServer.Accept(l)
-}
-
-type Calculator struct {
-	A, B int
-	Name string
-}
-
-func (c *Calculator) Add() int {
-	return c.A + c.B
-}
-
-func (c *Calculator) Subtract() int {
-	return c.A - c.B
+	// accept connection
+	Accept(l)
 }
 
 func main() {
-
 	log.SetFlags(0)
 	addr := make(chan string)
 	// server
@@ -49,15 +42,17 @@ func main() {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
-			args := fmt.Sprintf("ggt-rpc %d", i)
-			var reply string
-			if err := client.Call("Foo.Sum", args, &reply); err != nil {
+			args := &Args{Num1: i, Num2: i * i}
+			var reply int
+			ctx, _ := context.WithTimeout(context.Background(), 1*time.Minute)
+
+			if err := client.Call(ctx, "Foo.Sum", args, &reply); err != nil {
 				log.Fatal("call Foo.Sum error:", err)
 			}
-			log.Println("reply:", reply)
+
+			log.Printf("%d + %d = %d", args.Num1, args.Num2, reply)
 		}(i)
 
 	}
 	wg.Wait()
-
 }

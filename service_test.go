@@ -6,21 +6,6 @@ import (
 	"testing"
 )
 
-type Foo int
-type Args struct{ Num1, Num2 int }
-
-// exported method
-func (f Foo) Sum(args Args, reply *int) error {
-	*reply = args.Num1 + args.Num2
-	return nil
-}
-
-// unexported method
-func (f Foo) sum(args Args, reply *int) error {
-	*reply = args.Num1 + args.Num2
-	return nil
-}
-
 func _assert(cond bool, msg string, v ...interface{}) {
 	if !cond {
 		panic(fmt.Sprintf("assertion failed: "+msg, v...))

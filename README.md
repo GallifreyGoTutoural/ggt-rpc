@@ -9,13 +9,13 @@ The main reference source of the project is the blog of Geek Tutu: [7 days to im
 
 ## Development plan
 
-- [ ] Use encoding/gob to implement message encoding and decoding
-- [ ] Implement a simple server
-- [ ] Implement a high-performance client that supports asynchronous and concurrent
-- [ ] Implement service registration function through reflection
-- [ ] Implement service call on the server side
-- [ ] Add connection timeout processing mechanism
-- [ ] Add timeout processing mechanism for server processing
+- [x] Use encoding/gob to implement message encoding and decoding
+- [x] Implement a simple server
+- [x] Implement a high-performance client that supports asynchronous and concurrent
+- [x] Implement service registration function through reflection
+- [x] Implement service call on the server side
+- [x] Add connection timeout processing mechanism
+- [x] Add timeout processing mechanism for server processing
 - [ ] Support HTTP protocol
 - [ ] Implement server-side load balancing through random selection and Round Robin polling scheduling algorithm
 - [ ] Implement a simple registration center that supports service registration, receiving heartbeats, etc.
