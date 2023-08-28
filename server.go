@@ -62,7 +62,7 @@ func Accept(lis net.Listener) {
 
 // ServerConn runs the server on a single connection.
 // ServerConn blocks, serving the connection until the client hangs up.
-func (server *Server) ServerConn(conn net.Conn) {
+func (server *Server) ServerConn(conn io.ReadWriteCloser) {
 	defer func() {
 		_ = conn.Close()
 	}()
@@ -183,6 +183,7 @@ func (server *Server) handleRequest(cc codec.Codec, req *request, sending *sync.
 			body = invalidRequest
 			return
 		}
+		body = req.replyv.Interface()
 	}()
 	if timeout == 0 {
 		<-done
