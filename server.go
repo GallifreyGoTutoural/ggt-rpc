@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"net/http"
 	"reflect"
 	"strings"
 	"sync"
@@ -28,6 +29,39 @@ var DefaultOption = &Option{
 	CodecType:            codec.GobType,
 	ConnectionTimeoutSec: 10 * time.Second,
 	HandleTimeoutSec:     0,
+}
+
+const (
+	connected        = "200 Connected to ggtrpc"
+	defaultRPCPath   = "/_ggtrpc_"
+	defaultDebugPath = "/debug/ggtrpc"
+)
+
+func (server *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if r.Method != "CONNECT" {
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		_, _ = io.WriteString(w, "405 must CONNECT\n")
+		return
+	}
+	conn, _, err := w.(http.Hijacker).Hijack()
+	if err != nil {
+		log.Println("rpc hijacking", r.RemoteAddr, ":", err.Error())
+		return
+	}
+	_, _ = io.WriteString(conn, "HTTP/1.0 "+connected+"\n\n")
+	server.ServerConn(conn)
+}
+
+func (server *Server) HandleHTTP() {
+	http.Handle(defaultRPCPath, server)
+	http.Handle(defaultDebugPath, debugHTTP{server})
+	log.Println("rpc server debug path:", defaultDebugPath)
+}
+
+// HandleHTTP registers an HTTP handler for RPC messages on rpcPath, and a debugging handler on debugPath
+func HandleHTTP() {
+	DefaultServer.HandleHTTP()
 }
 
 // Server represents an RPC Server.

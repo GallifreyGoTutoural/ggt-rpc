@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"net"
+	"os"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -64,4 +66,30 @@ func TestClient_Call(t *testing.T) {
 		err := client.Call(context.Background(), "Bar.Timeout", 1, &reply)
 		_assert(err != nil && strings.Contains(err.Error(), "timeout"), "client.Call() error:%v", err)
 	})
+}
+
+func TestXDial(t *testing.T) {
+	if runtime.GOOS == "linux" {
+		ch := make(chan struct{})
+		addr := "tmp/ggtrpc.sock"
+		go func() {
+			_ = os.Remove(addr)
+			l, err := net.Listen("unix", addr)
+			if err != nil {
+				t.Fatal(err)
+			}
+			ch <- struct{}{}
+			Accept(l)
+		}()
+		<-ch
+		_, err := XDial("unix@" + addr)
+		_assert(err == nil, "XDial() error:%v", err)
+
+	}
+	if runtime.GOOS == "windows" {
+		addrCh := make(chan string)
+		go starServer(addrCh)
+		_, err := XDial("tcp@" + <-addrCh)
+		_assert(err == nil, "XDial() error:%v", err)
+	}
 }

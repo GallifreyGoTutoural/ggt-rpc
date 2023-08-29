@@ -1,13 +1,17 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/GallifreyGoTutoural/ggt-rpc/codec"
 	"io"
 	"log"
 	"net"
+	"net/http"
+	"strings"
 	"sync"
 	"time"
 )
@@ -293,4 +297,39 @@ func (client *Client) Call(ctx context.Context, serviceMethod string, args, repl
 		return call.Error
 	}
 	return call.Error
+}
+
+func NewHTTPClient(conn net.Conn, opt *Option) (*Client, error) {
+	// send options
+	_, _ = io.WriteString(conn, "CONNECT "+defaultRPCPath+" HTTP/1.0\n\n")
+
+	// read response
+	// before  switch to rpc, we need to make sure that the connection is established
+	resp, err := http.ReadResponse(bufio.NewReader(conn), &http.Request{Method: "CONNECT"})
+	if err == nil && resp.Status == connected {
+		return NewClient(conn, opt)
+	}
+	if err == nil {
+		err = errors.New("unexpected HTTP response:" + resp.Status)
+	}
+	return nil, err
+}
+
+func DialHttp(network, address string, opts ...*Option) (client *Client, err error) {
+	return dialTimeout(NewHTTPClient, network, address, opts...)
+}
+
+func XDial(rpcAddr string, opts ...*Option) (*Client, error) {
+	parts := strings.Split(rpcAddr, "@")
+	if len(parts) != 2 {
+		return nil, fmt.Errorf("rpcAddr format error: %s , expect protocol@addr", rpcAddr)
+	}
+	protocol, addr := parts[0], parts[1]
+	switch protocol {
+	case "http":
+		return DialHttp("tcp", addr, opts...)
+	default:
+		return Dial(protocol, addr, opts...)
+	}
+
 }
