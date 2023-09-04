@@ -18,5 +18,5 @@ The main reference source of the project is the blog of Geek Tutu: [7 days to im
 - [x] Add timeout processing mechanism for server processing
 - [x] Support HTTP protocol
 - [x] Implement server-side load balancing through random selection and Round Robin polling scheduling algorithm
-- [ ] Implement a simple registration center that supports service registration, receiving heartbeats, etc.
-- [ ] The client implements a service discovery mechanism based on the registration center
+- [x] Implement a simple registration center that supports service registration, receiving heartbeats, etc.
+- [x] The client implements a service discovery mechanism based on the registration center
